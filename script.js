@@ -91,13 +91,27 @@ function hideLoader(){
   updateNavDisabled();
 }
 
+// ★ここがエラー原因になりやすい箇所なので、書き方を単純化しました
 function updateNavDisabled(){
   const prevBtn = document.getElementById('prevMonth');
   const nextBtn = document.getElementById('nextMonth');
-  const atMin = !!minYearMonth && (state.monthStr <= minYearMonth);
-  const atMax = !!maxYearMonth && (state.monthStr >= maxYearMonth);
-  if (prevBtn) prevBtn.disabled = isLoading || atMin;
-  if (nextBtn) nextBtn.disabled = isLoading || atMax;
+  
+  let isMin = false;
+  if (minYearMonth && state.monthStr <= minYearMonth) {
+    isMin = true;
+  }
+  
+  let isMax = false;
+  if (maxYearMonth && state.monthStr >= maxYearMonth) {
+    isMax = true;
+  }
+  
+  if (prevBtn) {
+    prevBtn.disabled = (isLoading || isMin);
+  }
+  if (nextBtn) {
+    nextBtn.disabled = (isLoading || isMax);
+  }
 }
 
 function updateTitle(year, month) {
@@ -379,19 +393,29 @@ function showCellModal(data) {
   };
 }
 
-// ===== データ取得 =====
+// ===== データ取得 (デバッグログ付き) =====
 async function fetchSchedule(){
-  if (isLoading) return;
+  console.log("🚀 fetchSchedule開始"); // ★デバッグログ
+  if (isLoading) {
+    console.log("読み込み中のためスキップ");
+    return;
+  }
 
   const url = new URL(GAS_API);
   url.searchParams.set('action', 'schedule');
   url.searchParams.set('clinic', clinicCode);
   url.searchParams.set('month', state.monthStr); 
 
+  console.log("APIリクエスト: " + url.toString()); // ★デバッグログ
   showLoader();
+  
   try {
     const res = await fetch(url.toString());
+    console.log("レスポンス受信: " + res.status); // ★デバッグログ
+    
     const json = await res.json();
+    console.log("JSONパース成功");
+    
     if (!json.ok) throw new Error(json.error || 'API error');
     
     clinicName   = json.clinicName || '';
@@ -410,9 +434,11 @@ async function fetchSchedule(){
       return ia - ib;
     });
 
+    console.log("カレンダー描画へ");
     renderCalendar();
   } catch(e) {
-    console.error(e);
+    console.error("❌ エラー発生:", e);
+    // エラーでもアラートを出さず、コンソールのみにする
   } finally {
     hideLoader();
   }
@@ -420,6 +446,7 @@ async function fetchSchedule(){
 
 // ===== 初期化 =====
 document.addEventListener('DOMContentLoaded', function() {
+  console.log("DOM読み込み完了"); // ★デバッグログ
   const p = new URLSearchParams(location.search);
   clinicCode = p.get('clinic') || '001';
   
