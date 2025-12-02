@@ -1,4 +1,5 @@
 // ===== 設定 =====
+// ★ここに新しいAPIのURLを貼り付けてください（クォーテーションを消さないように注意）
 const GAS_API = 'https://script.google.com/macros/s/AKfycbwV-Rnvw1eLlLt8jAfZb9Ake95eJGKpaLhn6-CwO1SXLpbtV5Jjn7HgTQEOsTFd3m5G/exec';
 
 // ===== 定数定義 =====
@@ -412,7 +413,6 @@ async function fetchSchedule(){
     renderCalendar();
   } catch(e) {
     console.error(e);
-    // エラーでもアラートを出さず、コンソールのみにする（読み込み中...が消えるように）
   } finally {
     hideLoader();
   }
