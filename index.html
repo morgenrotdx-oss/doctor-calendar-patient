@@ -4,22 +4,25 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>医師勤務表</title>
-  <link rel="stylesheet" href="./style.css?v=holiday-red-2" />
+  <link rel="stylesheet" href="./style.css?v=patient-1" />
 </head>
 <body>
-  <!-- 医師名拡大用のモーダル（GAS版と同クラス名） -->
-  <div id="cellModal" class="cell-modal" style="display:none;">
-    <div class="cell-modal-content" id="cellModalContent"></div>
+  <div id="loader" class="loader">読み込み中…</div>
+
+  <div id="cellModal" class="cell-modal"
+       role="dialog" aria-modal="true"
+       aria-labelledby="cellModalTitle"
+       aria-describedby="cellModalContent"
+       style="display:none;">
+    <div class="cell-modal-content" id="cellModalContent" role="document"></div>
   </div>
 
-  <!-- カレンダー月移動ナビ（GAS版と同クラス名/ID） -->
   <div class="calendar-nav">
-    <button id="prevMonth" class="month-nav-btn">◀</button>
+    <button id="prevMonth" class="month-nav-btn" aria-label="前の月へ" type="button">◀</button>
     <h2 id="tableTitle"></h2>
-    <button id="nextMonth" class="month-nav-btn">▶</button>
+    <button id="nextMonth" class="month-nav-btn" aria-label="次の月へ" type="button">▶</button>
   </div>
 
-  <!-- カレンダー本体（GAS版と同ID/構造） -->
   <div class="calendar-container">
     <table id="calendar">
       <thead></thead>
@@ -27,14 +30,12 @@
     </table>
   </div>
 
-  <!-- 注釈（そのまま） -->
   <div class="calendar-note">
     ※ 黒文字は男性・赤文字は女性医師です。<br>
     ※ ◇印♦印がついている先生は舌下療法対応可能です。<br>
     （♢：シダキュア・ミティキュア、♦：アシテア＋シダキュア・ミティキュア）
   </div>
 
-  <script src="./script.js?v=20250306a"></script>
-  <div id="loader" class="loader" aria-live="polite">読み込み中…</div>
+  <script src="./script.js?v=patient-1"></script>
 </body>
 </html>
