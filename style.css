@@ -70,7 +70,7 @@ th, td {
   text-align: center;
   vertical-align: middle;
   min-width: 45px;
-  white-space: normal; /* 折り返し許可 */
+  white-space: normal;
   overflow-wrap: anywhere;
   font-size: 14px;
 }
@@ -183,47 +183,59 @@ tr.week-row td.holiday {
   line-height: 1.6;
 }
 
-/* ====== モーダル（患者向け：ピンク） ====== */
+/* ====== モーダル（患者向け：ピンク・位置修正版） ====== */
 .cell-modal {
   position: fixed;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   background: rgba(0,0,0,.45);
-  padding: 12px;
   z-index: 11000;
-  display: none; /* JS制御 */
-  align-items: center; justify-content: center;
-  inset: 0;
+  
+  /* ★修正：Flexboxで画面中央に配置 */
+  display: none; /* JSでflexに切り替わる */
+  align-items: center;
+  justify-content: center;
+  padding: 20px; /* 端に寄りすぎないように */
 }
+
 .cell-modal-content {
-  position: relative;
+  position: relative; /* 内部要素の基準 */
   background: #FFE4EC !important; /* ピンク */
   color: #333;
   border: 1px solid #F5C5D5;
   border-radius: 12px;
   box-shadow: 0 16px 40px rgba(0,0,0,.3);
   text-align: center;
-  width: min(440px, 84vw);
-  max-height: 88vh;
-  overflow: auto;
+  
+  /* サイズ調整 */
+  width: min(440px, 90vw);
+  max-height: 80vh;
+  overflow-y: auto;
+  
   padding: 26px 18px;
   font-size: 22px;
   line-height: 1.6;
+  
+  /* デフォルトのズレ対策（transformなどは削除済み） */
+  margin: auto; 
 }
+
 #cellModalTitle { font-size: 30px; margin: 0 0 12px; font-weight: 700; }
 .modal-label { display: block; margin: 8px 0 4px; color: #777; font-size: 20px; }
 .modal-value { margin: 2px 0 10px; font-size: 34px; font-weight: 800; }
+
 #cellModalClose {
   position: absolute; top: 10px; right: 10px;
   border: 1px solid #d1d5db; background: #fff; color: #111;
   padding: 6px 12px; border-radius: 9999px; font-size: 14px; cursor: pointer;
 }
+
 .cell-modal .highlight-time { color: #e53935 !important; font-weight: bold; }
 body.no-scroll { overflow: hidden; }
 
 @media (max-width: 600px) {
   .cell-modal-content {
-    width: 88vw;
+    width: 90vw;
     padding: 24px 14px;
     font-size: clamp(22px, 7vw, 28px);
   }
