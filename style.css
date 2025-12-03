@@ -1,158 +1,233 @@
 /* ====== ベース・レイアウト ====== */
-body{
-  font-family:"Meiryo",sans-serif;
-  padding:16px;
-  margin:0;
-  background:#f0f0f5;
-  font-size:16px;
+body {
+  font-family: "Meiryo", sans-serif;
+  padding: 16px;
+  margin: 0;
+  background: #f0f0f5;
+  font-size: 16px;
 }
-h2{ text-align:center; margin-bottom:1rem; }
-#tableTitle{ margin:0; flex-shrink:0; font-size:1.35rem; font-weight:bold; }
+h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+#tableTitle {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 1.35rem;
+  font-weight: bold;
+}
 
 /* 読み込み中オーバーレイ */
-.loader{
-  position:fixed; inset:0;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(255,255,255,.8);
-  font-size:1.2rem; color:#555; z-index:10000;
+.loader {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 1.2rem;
+  color: #555;
+  z-index: 10000;
+  font-weight: bold;
 }
+.loader.show { display: flex; }
 
 /* ====== カレンダー外枠・ナビ ====== */
-.calendar-container{ overflow-x:auto; }
-.calendar-nav{ display:flex; align-items:center; justify-content:center; gap:1rem; margin-bottom:1rem; }
-.month-nav-btn{
-  font-size:1.5rem; padding:0 1rem; border:none; background:#f4f4f4;
-  border-radius:4px; cursor:pointer; transition:background .2s;
+.calendar-container {
+  overflow-x: auto;
 }
-.month-nav-btn:disabled{ background:#e0e0e0; color:#aaa; cursor:not-allowed; }
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.month-nav-btn {
+  font-size: 1.5rem;
+  padding: 0 1rem;
+  border: none;
+  background: #f4f4f4;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.month-nav-btn:disabled {
+  background: #e0e0e0;
+  color: #aaa;
+  cursor: not-allowed;
+}
 
 /* ====== カレンダー本体テーブル ====== */
-table{ width:100%; border-collapse:collapse; table-layout:fixed; }
-th,td{
-  border:1px solid #ccc; padding:6px; text-align:center; vertical-align:middle;
-  min-width:40px; white-space:normal; overflow-wrap:anywhere; font-size:14px;
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
 }
-th{ background:#e6e6e6; }
+th, td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: center;
+  vertical-align: middle;
+  min-width: 45px;
+  white-space: normal; /* 折り返し許可 */
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+th { background-color: #e6e6e6; }
 
-/* 曜日ヘッダ色 */
-.sunday{ color:red; }
-.saturday{ color:blue; }
+@media (max-width: 600px) {
+  th, td {
+    font-size: 11px;
+    min-width: 28px;
+    padding: 4px 2px;
+  }
+  h2 { font-size: 1rem; }
+}
 
-/* 週・診療科・日付セル */
-.week-row td:first-child{ background:#e1f5fe; font-weight:bold; }        /* 週ラベル */
-#calendar td:first-child{ background:#fceabb; font-weight:bold; }        /* 診療科名 */
-#calendar tr.date-row td:first-child{ background:#fff !important; }      /* 日付行の左端は白に戻す */
+/* ====== 曜日ヘッダ ====== */
+.sunday { color: red; }
+.saturday { color: blue; }
 
-/* 週の区切りを太く */
-tr.week-row{ border-top:3px solid #aaa !important; }
+/* ====== 週・診療科・日付セル ====== */
+.week-row td:first-child {
+  background-color: #e1f5fe;
+  font-weight: bold;
+}
+#calendar td:first-child {
+  background-color: #fceabb;
+  font-weight: bold;
+}
+#calendar tr.date-row td:first-child {
+  background: #fff !important;
+}
+tr.week-row {
+  border-top: 3px solid #aaa !important;
+}
 
 /* ====== 特別な日付セル ====== */
-#calendar tr:not(.date-row) td.today-cell{
-  background:#fff !important; border:2.5px solid #ffb300 !important; z-index:1;
+#calendar tr:not(.date-row) td.today-cell {
+  background: #fff !important;
+  border: 2.5px solid #ffb300 !important;
+  z-index: 1;
 }
-#calendar tr.date-row td:not(:first-child):not(.holiday):not(.today-cell){
-  background:#e6f7ff !important; font-weight:bold; font-size:1.2em;
+#calendar tr.date-row td:not(:first-child):not(.holiday):not(.today-cell) {
+  background: #e6f7ff !important;
+  font-weight: bold;
+  font-size: 1.2em;
 }
-#calendar tr.date-row td.today-cell{
-  background:#ffb300 !important; color:#fff !important; font-weight:bold;
-  border:3px solid #ff9800 !important; box-shadow:0 0 8px #ff980080; font-size:1.35em; z-index:9;
+#calendar tr.date-row td.today-cell {
+  background: #ffb300 !important;
+  color: #fff !important;
+  font-weight: bold;
+  border: 3px solid #ff9800 !important;
+  font-size: 1.35em;
+  z-index: 9;
 }
 
-/* データ行の背景（例外は除外） */
-#calendar tr:not(.date-row) td:not(:first-child):not(.kyushin-cell):not(.cyousei-cell):not(.yaegashi-cell){
-  background:#fff !important;
+/* データ行の背景 */
+#calendar tr:not(.date-row) td:not(:first-child):not(.kyushin-cell):not(.cyousei-cell):not(.yaegashi-cell) {
+  background: #fff !important;
 }
 
 /* 休診セル */
-#calendar tr:not(.date-row) td.kyushin-cell{
-  background:#e0e0e0 !important; color:#888 !important; cursor:default !important; pointer-events:none;
+#calendar tr:not(.date-row) td.kyushin-cell {
+  background: #e0e0e0 !important;
+  color: #888 !important;
+  cursor: default !important;
+  pointer-events: none;
 }
 
 /* 個別：八重樫 9:30～ */
-#calendar tr:not(.date-row) td.yaegashi-cell{
-  background:#fff9c4 !important; color:#000 !important; font-weight:bold !important;
+#calendar tr:not(.date-row) td.yaegashi-cell {
+  background: #fff9c4 !important;
+  color: #000 !important;
+  font-weight: bold !important;
 }
 
 /* 祝日 */
-#calendar td.holiday{ background:#e53935 !important; color:#fff !important; font-weight:bold; }
-tr.week-row td.holiday{ color:#d32f2f !important; font-weight:bold; }
+#calendar td.holiday {
+  background: #e53935 !important;
+  color: #fff !important;
+  font-weight: bold;
+}
+tr.week-row td.holiday {
+  color: #d32f2f !important;
+  font-weight: bold;
+}
+
+/* 日付行の土日 */
+#calendar tr.date-row td.saturday { color: #1976d2 !important; }
+#calendar tr.date-row td.sunday { color: #e53935 !important; }
+
+/* 今日セルが土日の場合 */
+#calendar tr.date-row td.today-cell.saturday,
+#calendar tr.date-row td.today-cell.sunday {
+  background: #ffe066 !important;
+  border: 3px solid #ff9800 !important;
+}
+#calendar tr.date-row td.today-cell.saturday { color: #1976d2 !important; }
+#calendar tr.date-row td.today-cell.sunday { color: #e53935 !important; }
 
 /* その他 */
-.female{ color:red; }
-.calendar-note{
-  margin:18px 0 0; font-size:.97em; color:#555; background:#fffbe8;
-  border-left:4px solid #ffe082; padding:10px 12px; border-radius:5px;
-  max-width:75vw; line-height:1.6;
+.female { color: red; }
+.calendar-note {
+  margin: 18px 0 0 0;
+  font-size: 0.97em;
+  color: #555;
+  background: #fffbe8;
+  border-left: 4px solid #ffe082;
+  padding: 10px 12px;
+  border-radius: 5px;
+  max-width: 75vw;
+  line-height: 1.6;
 }
 
-/* 日付行の土日色 */
-#calendar tr.date-row td.saturday{ color:#1976d2 !important; }
-#calendar tr.date-row td.sunday{ color:#e53935 !important; }
-
-/* 今日セルが土日の場合の上書き */
-#calendar tr.date-row td.today-cell.saturday{
-  color:#1976d2 !important; background:#ffe066 !important; border:3px solid #ff9800 !important;
+/* ====== モーダル（患者向け：ピンク） ====== */
+.cell-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,.45);
+  padding: 12px;
+  z-index: 11000;
+  display: none; /* JS制御 */
+  align-items: center; justify-content: center;
+  inset: 0;
 }
-#calendar tr.date-row td.today-cell.sunday{
-  color:#e53935 !important; background:#ffe066 !important; border:3px solid #ff9800 !important;
+.cell-modal-content {
+  position: relative;
+  background: #FFE4EC !important; /* ピンク */
+  color: #333;
+  border: 1px solid #F5C5D5;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.3);
+  text-align: center;
+  width: min(440px, 84vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 26px 18px;
+  font-size: 22px;
+  line-height: 1.6;
 }
-
-/* セル1行表示用ユーティリティ */
-.cell-entry.one-line{
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis; line-height:1.1;
+#cellModalTitle { font-size: 30px; margin: 0 0 12px; font-weight: 700; }
+.modal-label { display: block; margin: 8px 0 4px; color: #777; font-size: 20px; }
+.modal-value { margin: 2px 0 10px; font-size: 34px; font-weight: 800; }
+#cellModalClose {
+  position: absolute; top: 10px; right: 10px;
+  border: 1px solid #d1d5db; background: #fff; color: #111;
+  padding: 6px 12px; border-radius: 9999px; font-size: 14px; cursor: pointer;
 }
+.cell-modal .highlight-time { color: #e53935 !important; font-weight: bold; }
+body.no-scroll { overflow: hidden; }
 
-/* ====== モーダル（オーバーレイ＋本体） ====== */
-.cell-modal{
-  position:fixed; inset:0; display:none;        /* JSでdisplay:flexに切替 */
-  align-items:center; justify-content:center;
-  background:rgba(0,0,0,.45);                   /* 黒半透明オーバーレイ */
-  padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
-  z-index:11000;
-}
-.cell-modal-content{
-  position:relative;
-  background:#FFE4EC !important;                /* ピンク本体 */
-  color:#333; border:1px solid #F5C5D5; border-radius:12px;
-  box-shadow:0 16px 40px rgba(0,0,0,.3);
-  text-align:center;
-  width:min(440px, 84vw);                       /* 細身 */
-  max-height:88vh; overflow:auto; -webkit-overflow-scrolling:touch;
-  padding:26px 18px;
-  font-size:22px; line-height:1.6;
-}
-#cellModalTitle{ font-size:30px; margin:0 0 12px; font-weight:700; }
-.modal-label{ display:block; margin:8px 0 4px; color:#777; font-size:20px; }
-.modal-value{ margin:2px 0 10px; font-size:34px; font-weight:800; }
-#cellModalClose{
-  position:absolute; top:10px; right:10px;
-  border:1px solid #d1d5db; background:#fff; color:#111;
-  padding:6px 12px; border-radius:9999px; font-size:14px; cursor:pointer;
-}
-#cellModalClose:hover{ background:#e5e7eb; }
-#cellModalClose:focus-visible{ outline:3px solid #60a5fa; outline-offset:2px; }
-
-/* モーダル内で「9:30」を強調 */
-.cell-modal .highlight-time{ color:#e53935 !important; font-weight:bold; }
-
-/* 背面スクロール抑止（JSで body.no-scroll を付与） */
-body.no-scroll{ overflow:hidden; }
-
-/* ====== スマホ最適化 ====== */
-@media (max-width:600px){
-  body{ font-size:17px; }
-  #tableTitle{ font-size:1.25rem; }
-  th,td{ font-size:12.5px; padding:6px 4px; }
-  .month-nav-btn{ font-size:1.7rem; padding:0 .9rem; }
-
-  .cell-modal-content{
-    width:88vw;                                   /* さらに細身で画面にフィット */
-    padding:24px 14px;
-    font-size:clamp(22px, 7vw, 28px);
-    line-height:1.65;
+@media (max-width: 600px) {
+  .cell-modal-content {
+    width: 88vw;
+    padding: 24px 14px;
+    font-size: clamp(22px, 7vw, 28px);
   }
-  #cellModalTitle{ font-size:clamp(28px, 8vw, 34px); }
-  .modal-label{  font-size:clamp(20px, 6vw, 24px); }
-  .modal-value{  font-size:clamp(34px, 9vw, 40px); }
-  #cellModalClose{ font-size:16px; padding:8px 14px; }
+  #cellModalTitle { font-size: clamp(28px, 8vw, 34px); }
+  .modal-label { font-size: clamp(20px, 6vw, 24px); }
+  .modal-value { font-size: clamp(34px, 9vw, 40px); }
 }
