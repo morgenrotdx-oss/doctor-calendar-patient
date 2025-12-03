@@ -183,80 +183,51 @@ tr.week-row td.holiday {
   line-height: 1.6;
 }
 
-/* ====== モーダル（患者向け：スリム版） ====== */
+/* ====== モーダル（患者向け：ピンク・幅修正版） ====== */
 .cell-modal {
-  /* 固定配置・全画面 */
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  width: 100% !important;
-  height: 100% !important;
-  height: 100dvh !important; /* スマホのアドレスバー対策 */
-  
-  background: rgba(0,0,0,0.45);
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,.45);
   z-index: 11000;
   
-  /* Flexboxでど真ん中へ */
-  display: none; /* JSでflexに切り替わる */
-  align-items: center !important;
-  justify-content: center !important;
-  
-  /* 余計な余白やズレをリセット */
-  padding: 20px !important;
-  margin: 0 !important;
-  transform: none !important;
+  /* Flexboxでど真ん中に配置 */
+  display: none; 
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
 }
 
 .cell-modal-content {
-  position: relative !important;
-  background: #FFE4EC !important; /* ピンク */
+  position: relative;
+  background: #FFE4EC !important;
   color: #333;
   border: 1px solid #F5C5D5;
   border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.3);
+  box-shadow: 0 16px 40px rgba(0,0,0,.3);
   text-align: center;
   
-  /* ★修正：幅を狭く（スリム化） */
-  width: min(340px, 85vw) !important;
+  /* ★修正：幅の設定を変更 */
+  width: auto;           /* 中身に合わせて伸縮 */
+  min-width: 300px;      /* 小さすぎないように */
+  max-width: 90vw;       /* 画面からはみ出さない */
+  
   max-height: 80vh;
   overflow-y: auto;
-  
-  /* 余白調整 */
-  padding: 20px 16px !important;
-  line-height: 1.5;
-  
-  /* ズレ防止 */
-  margin: 0 !important;
-  top: auto !important;
-  left: auto !important;
-  transform: none !important;
+  padding: 26px 18px;
+  font-size: 22px;
+  line-height: 1.6;
+  margin: auto; 
 }
 
-/* 文字サイズを全体的に縮小 */
-#cellModalTitle { 
-  font-size: 22px !important; /* 元30px */
-  margin: 0 0 10px; 
-  font-weight: 700; 
-}
-.modal-label { 
-  display: block; 
-  margin: 8px 0 2px; 
-  color: #777; 
-  font-size: 14px !important; /* 元20px */
-}
-.modal-value { 
-  margin: 2px 0 8px; 
-  font-size: 20px !important; /* 元34px */
-  font-weight: 800; 
-}
+#cellModalTitle { font-size: 30px; margin: 0 0 12px; font-weight: 700; }
+.modal-label { display: block; margin: 8px 0 4px; color: #777; font-size: 20px; }
+.modal-value { margin: 2px 0 10px; font-size: 34px; font-weight: 800; }
 
 #cellModalClose {
   position: absolute; top: 10px; right: 10px;
   border: 1px solid #d1d5db; background: #fff; color: #111;
-  padding: 4px 10px; 
-  border-radius: 9999px; 
-  font-size: 13px; 
-  cursor: pointer;
+  padding: 6px 12px; border-radius: 9999px; font-size: 14px; cursor: pointer;
 }
 
 .cell-modal .highlight-time { color: #e53935 !important; font-weight: bold; }
@@ -264,12 +235,12 @@ body.no-scroll { overflow: hidden; }
 
 @media (max-width: 600px) {
   .cell-modal-content {
-    /* スマホでも幅を少し抑える */
-    width: 85vw !important;
-    padding: 20px 14px !important;
+    /* スマホ時は少しタイトに */
+    min-width: 280px;
+    padding: 24px 14px;
+    font-size: clamp(22px, 6vw, 26px); /* 文字サイズも少し調整 */
   }
-  /* スマホでの文字サイズ微調整 */
-  #cellModalTitle { font-size: 20px !important; }
-  .modal-label { font-size: 13px !important; }
-  .modal-value { font-size: 18px !important; }
+  #cellModalTitle { font-size: clamp(24px, 8vw, 30px); }
+  .modal-label { font-size: clamp(18px, 5vw, 22px); }
+  .modal-value { font-size: clamp(28px, 8vw, 36px); }
 }
