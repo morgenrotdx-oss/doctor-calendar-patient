@@ -80,108 +80,75 @@ function normalizeWeekChar(x) {
 function showLoader(){ 
   isLoading = true;
   const loader = document.getElementById('loader');
-  if (loader) loader.style.display = 'flex';
+  if (loader) loader.classList.add('show');
   updateNavDisabled();
 }
 
 function hideLoader(){ 
   isLoading = false;
   const loader = document.getElementById('loader');
-  if (loader) loader.style.display = 'none';
+  if (loader) loader.classList.remove('show');
   updateNavDisabled();
 }
 
-// ★ここがエラー原因になりやすい箇所なので、書き方を単純化しました
 function updateNavDisabled(){
   const prevBtn = document.getElementById('prevMonth');
   const nextBtn = document.getElementById('nextMonth');
   
   let isMin = false;
-  if (minYearMonth && state.monthStr <= minYearMonth) {
-    isMin = true;
-  }
+  if (minYearMonth && state.monthStr <= minYearMonth) isMin = true;
   
   let isMax = false;
-  if (maxYearMonth && state.monthStr >= maxYearMonth) {
-    isMax = true;
-  }
+  if (maxYearMonth && state.monthStr >= maxYearMonth) isMax = true;
   
-  if (prevBtn) {
-    prevBtn.disabled = (isLoading || isMin);
-  }
-  if (nextBtn) {
-    nextBtn.disabled = (isLoading || isMax);
-  }
+  if (prevBtn) prevBtn.disabled = (isLoading || isMin);
+  if (nextBtn) nextBtn.disabled = (isLoading || isMax);
 }
 
 function updateTitle(year, month) {
   const el = document.getElementById('tableTitle');
-  if (el) el.textContent = (clinicName || "") + " " + year + "年" + (month + 1) + "月 - 医師勤務表";
+  if (el) el.textContent = (clinicName || "") + " " + year + "年" + (month + 1) + "月 医師勤務表";
 }
 
 function clearTable() {
-  const thead = document.querySelector('#calendar thead');
-  const tbody = document.querySelector('#calendar tbody');
-  if (thead) thead.innerHTML = '';
-  if (tbody) tbody.innerHTML = '';
+  document.querySelector('#calendar thead').innerHTML = '';
+  document.querySelector('#calendar tbody').innerHTML = '';
 }
 
 function renderHeader() {
-  const thead = document.querySelector('#calendar thead');
-  if (!thead) return;
-
   const headRow = document.createElement('tr');
   headRow.appendChild(document.createElement('th'));
-  
-  for (let i = 0; i < WEEKDAYS.length; i++) {
+  WEEKDAYS.forEach((wd, i) => {
     const th = document.createElement('th');
-    th.textContent = WEEKDAYS[i];
+    th.textContent = wd;
     if (i === 5) th.classList.add('saturday');
     if (i === 6) th.classList.add('sunday');
     headRow.appendChild(th);
-  }
-  thead.appendChild(headRow);
+  });
+  document.querySelector('#calendar thead').appendChild(headRow);
 }
 
-// ===== メイン描画処理 =====
+// ===== メイン描画 (患者向け) =====
 function renderCalendar(){
   if (!state.monthStr || !/^\d{4}-\d{2}$/.test(state.monthStr)) {
     state.monthStr = yyyymm(new Date());
   }
 
-  const info = calcMonthInfoFromYYYYMM_JST(state.monthStr);
-  const year = info.year;
-  const month = info.month;
-  let firstWeekday = info.firstWeekday;
-  const totalDays = info.totalDays;
-  const numWeeks = info.numWeeks;
-
+  const { year, month, firstWeekday, totalDays, numWeeks } = calcMonthInfoFromYYYYMM_JST(state.monthStr);
   const youbiMap = inferWeekcharMapForMonth(year, month);
   
-  function getYoubi(d) {
-    const fromMap = youbiMap.get(d);
-    if (fromMap) return normalizeWeekChar(fromMap);
-    const dateObj = new Date(Date.UTC(year, month, d, 9));
-    const wd = dateObj.getUTCDay();
-    return ["日","月","火","水","木","金","土"][wd];
-  }
+  const jpDowJST = (y, m0, d) => ["日","月","火","水","木","金","土"][new Date(Date.UTC(y, m0, d, 9)).getUTCDay()];
+  const youbiOf = (d) => normalizeWeekChar(youbiMap.get(d) || jpDowJST(year, month, d));
 
   const y1 = youbiMap.get(1);
-  if (y1 != null && WK_INDEX[y1] != null) {
-    firstWeekday = WK_INDEX[y1];
-  }
+  let startWd = firstWeekday;
+  if (y1 != null && WK_INDEX[y1] != null) startWd = WK_INDEX[y1];
 
   updateTitle(year, month);
   clearTable();
   renderHeader();
 
-  const holidaySet = new Set();
-  if (holidays) {
-    holidays.forEach(function(h) {
-      holidaySet.add(h.split('(')[0]);
-    });
-  }
-
+  const holidaySet = new Set((holidays || []).map(h => h.split('(')[0]));
   const nowJST = new Date(Date.now() + 9*60*60*1000);
   const tbodyNew = document.createElement('tbody');
 
@@ -192,14 +159,14 @@ function renderCalendar(){
 
     for (let d = 0; d < 7; d++) {
       const td = document.createElement('td');
-      const dayNum = w * 7 + d - firstWeekday + 1;
+      const dayNum = w * 7 + d - startWd + 1;
       
       if (dayNum >= 1 && dayNum <= totalDays) {
         td.textContent = dayNum;
         if (d === 5) td.classList.add('saturday');
         if (d === 6) td.classList.add('sunday');
         
-        const label = (month + 1) + '/' + dayNum;
+        const label = `${month + 1}/${dayNum}`;
         if (holidaySet.has(label)) td.classList.add('holiday');
 
         if (year === nowJST.getUTCFullYear() &&
@@ -212,210 +179,192 @@ function renderCalendar(){
     }
     tbodyNew.appendChild(trWeek);
 
-    // ドクター有無判定
     const dayHasDoctor = {};
     for (let d = 0; d < 7; d++) {
-      const dayNum = w * 7 + d - firstWeekday + 1;
+      const dayNum = w * 7 + d - startWd + 1;
       if (dayNum < 1 || dayNum > totalDays) continue;
 
-      const tok = getYoubi(dayNum);
-      const keyJP = (month + 1) + '/' + dayNum + '(' + tok + ')';
-      const keyEN = (month + 1) + '/' + dayNum + '(' + (JP2EN[tok] || tok) + ')';
+      const tok = youbiOf(dayNum);
+      const keyJP = `${month + 1}/${dayNum}(${tok})`;
+      const keyEN = `${month + 1}/${dayNum}(${JP2EN[tok] || tok})`;
 
-      let has = false;
-      if (rooms) {
-        has = rooms.some(function(room) {
-          const obj = schedule[room] || {};
-          let entries = obj[keyJP] || obj[keyEN] || [];
-          if (!Array.isArray(entries)) entries = [entries];
-          
-          return entries.some(function(e) {
-            const disp = e.displayName || e.name || '';
-            return !!disp && disp !== '休診';
-          });
+      dayHasDoctor[dayNum] = rooms.some(room => {
+        const obj = schedule[room] || {};
+        let entries = obj[keyJP] || obj[keyEN] || [];
+        if (!Array.isArray(entries)) entries = [entries];
+        return entries.some(e => {
+          const disp = e.displayName || e.name || '';
+          return !!disp && disp !== '休診';
         });
-      }
-      dayHasDoctor[dayNum] = has;
-    }
-
-    // 診療科ごとの行
-    if (rooms) {
-      rooms.forEach(function(room, rIndex) {
-        const trRoom = document.createElement('tr');
-        const tdRoom = document.createElement('td');
-        tdRoom.textContent = room; 
-        trRoom.appendChild(tdRoom);
-
-        for (let d = 0; d < 7; d++) {
-          const td = document.createElement('td');
-          const dayNum = w * 7 + d - firstWeekday + 1;
-
-          if (dayNum < 1 || dayNum > totalDays) {
-            trRoom.appendChild(td);
-            continue;
-          }
-
-          const tok = getYoubi(dayNum);
-          const keyJP = (month + 1) + '/' + dayNum + '(' + tok + ')';
-          const keyEN = (month + 1) + '/' + dayNum + '(' + (JP2EN[tok] || tok) + ')';
-          
-          let entries = (schedule[room] && (schedule[room][keyJP] || schedule[room][keyEN])) || [];
-          if (!Array.isArray(entries)) entries = [entries];
-
-          if (!dayHasDoctor[dayNum]) {
-            if (rIndex === 0) {
-              td.textContent = '休診日';
-              td.classList.add('kyushin-cell');
-              td.setAttribute('aria-label', (month+1) + '/' + dayNum + ' 休診日');
-              td.rowSpan = rooms.length;
-              trRoom.appendChild(td);
-            }
-            continue;
-          }
-
-          if (entries.length > 0) {
-            entries.sort(function(a, b) {
-              const parseTime = function(t) {
-                const p = (t || "0:00").split(":");
-                return Number(p[0]) * 60 + (Number(p[1]) || 0);
-              };
-              return parseTime(a.timeFrom) - parseTime(b.timeFrom);
-            });
-
-            let html = "";
-            entries.forEach(function(e) {
-              const timeTxt = (e.timeFrom || "") + (e.timeTo ? '～' + e.timeTo : '');
-              const sexClass = (e.sex === "女") ? ' class="female"' : '';
-              const nameTxt = '<span' + sexClass + '>' + (e.displayName || e.name) + '</span>';
-              const tongueIcon = e.tongueMark ? ' <span title="舌下">' + e.tongueMark + '</span>' : '';
-              
-              const sep = oneLine ? ' ' : '<br>';
-              const cls = oneLine ? 'cell-entry one-line' : 'cell-entry';
-              
-              html += '<div class="' + cls + '" style="margin:2px 0">' + timeTxt + sep + nameTxt + tongueIcon + '</div>';
-            });
-            td.innerHTML = html;
-
-            // 八重樫ハイライト
-            const isYaegashi = entries.some(function(e) {
-              return e.displayName === "八重樫" && e.timeFrom === "9:30";
-            });
-            if (isYaegashi) {
-              td.classList.add("yaegashi-cell");
-            }
-
-            // 全て休診ならグレーアウト
-            const allKyushin = entries.every(function(e) {
-              return (e.displayName || e.name) === "休診";
-            });
-
-            if (allKyushin) {
-              td.classList.add("kyushin-cell");
-            } else {
-               td.style.cursor = "zoom-in";
-               td.dataset.entry = JSON.stringify({
-                 date: (month+1) + '/' + dayNum,
-                 dept: room,
-                 entries: entries
-               });
-            }
-          } else {
-            td.textContent = "−";
-            td.setAttribute('aria-label', (month+1) + '/' + dayNum + ' ' + room + ' −');
-          }
-
-          trRoom.appendChild(td);
-        }
-        tbodyNew.appendChild(trRoom);
       });
     }
+
+    rooms.forEach((room, rIndex) => {
+      const trRoom = document.createElement('tr');
+      const tdRoom = document.createElement('td');
+      tdRoom.textContent = room;
+      trRoom.appendChild(tdRoom);
+
+      for (let d = 0; d < 7; d++) {
+        const td = document.createElement('td');
+        const dayNum = w * 7 + d - startWd + 1;
+
+        if (dayNum < 1 || dayNum > totalDays) {
+          trRoom.appendChild(td);
+          continue;
+        }
+
+        const tok = youbiOf(dayNum);
+        const keyJP = `${month + 1}/${dayNum}(${tok})`;
+        const keyEN = `${month + 1}/${dayNum}(${JP2EN[tok] || tok})`;
+        
+        let entries = (schedule[room]?.[keyJP]) || (schedule[room]?.[keyEN]) || [];
+        if (!Array.isArray(entries)) entries = [entries];
+
+        if (!dayHasDoctor[dayNum]) {
+          if (rIndex === 0) {
+            td.textContent = '休診日';
+            td.classList.add('kyushin-cell');
+            td.setAttribute('aria-label', `${month+1}/${dayNum} 休診日`);
+            td.rowSpan = rooms.length;
+            trRoom.appendChild(td);
+          }
+          continue;
+        }
+
+        if (entries.length > 0) {
+          entries.sort((a,b) => {
+             const p = t => {
+               const [hh,mm] = (t||"0:00").split(":").map(Number);
+               return hh*60+(mm||0);
+             };
+             return p(a.timeFrom) - p(b.timeFrom);
+          });
+
+          let html = "";
+          entries.forEach(entry => {
+            const t = `${entry.timeFrom || ''}${entry.timeTo ? '～' + entry.timeTo : ''}`;
+            
+            // ★患者向け特別ロジック：八重樫9:30強調など
+            const sexClass = entry.sex === '女' ? ' class="female"' : '';
+            const tongueIcon = entry.tongueMark ? ` <span title="舌下">${entry.tongueMark}</span>` : '';
+            const dispName = entry.displayName || entry.name;
+
+            // ★修正ポイント：時間と名前を縦に並べる
+            html += `<div style="margin:2px 0;">
+                       <div style="font-size:0.9em; line-height:1.2;">${t}</div>
+                       <div><span${sexClass}>${dispName}</span>${tongueIcon}</div>
+                     </div>`;
+          });
+          td.innerHTML = html;
+
+          // 八重樫ハイライト
+          if (entries.some(e => e.displayName === "八重樫" && e.timeFrom === "9:30")) {
+            td.classList.add("yaegashi-cell");
+          }
+
+          const allKyushin = entries.every(e => (e.displayName||e.name) === '休診');
+          if (allKyushin) td.classList.add('kyushin-cell');
+
+          if (!allKyushin) {
+            td.style.cursor = 'zoom-in';
+            td.dataset.entry = JSON.stringify({
+              date: `${month+1}/${dayNum}`,
+              dept: room,
+              entries: entries 
+            });
+          }
+        } else {
+          td.textContent = "−";
+          td.setAttribute('aria-label', `${month+1}/${dayNum} ${room} −`);
+        }
+
+        trRoom.appendChild(td);
+      }
+      tbodyNew.appendChild(trRoom);
+    });
   }
 
   const table = document.getElementById('calendar');
-  if (table && table.tBodies[0]) {
-    table.replaceChild(tbodyNew, table.tBodies[0]);
-  } else if (table) {
-    table.appendChild(tbodyNew);
-  }
+  const oldTbody = table.tBodies[0];
+  if (oldTbody) table.replaceChild(tbodyNew, oldTbody);
+  else table.appendChild(tbodyNew);
 }
 
-// ===== モーダル =====
+// ===== モーダル (患者向け：ピンク) =====
 function showCellModal(data) {
-  const date = data.date;
-  const dept = data.dept;
-  let entries = data.entries;
-  
-  const modal = document.getElementById('cellModal');
-  const content = document.getElementById('cellModalContent');
-  if (!modal || !content) return;
+  const { date, dept, entries: rawEntries } = data;
+  let entries = Array.isArray(rawEntries) ? rawEntries : [rawEntries];
 
-  let htmlParts = [
-    '<button type="button" id="cellModalClose" aria-label="閉じる">閉じる</button>',
-    '<h3 id="cellModalTitle">勤務詳細</h3>',
-    '<div class="modal-label">日付</div><div class="modal-value">' + date + '</div>',
-    '<div class="modal-label">診療科</div><div class="modal-value">' + dept + '</div>'
-  ];
+  const prevModal = document.querySelector('.cell-modal');
+  if (prevModal) {
+    prevModal.classList.add('fade-out');
+    setTimeout(() => { prevModal.remove(); create(); }, 200);
+  } else {
+    create();
+  }
 
-  if (!Array.isArray(entries)) entries = [entries];
+  function create() {
+    const modal = document.createElement('div');
+    modal.className = 'cell-modal';
+    
+    let parts = [
+      `<button type="button" id="cellModalClose" aria-label="閉じる">閉じる</button>`,
+      `<h3 id="cellModalTitle">勤務詳細</h3>`,
+      `<div class="modal-label">日付</div><div class="modal-value">${date}</div>`,
+      `<div class="modal-label">診療科</div><div class="modal-value">${dept}</div>`
+    ];
 
-  entries.forEach(function(e) {
-    const from = e.timeFrom || "";
-    const to   = e.timeTo   || "";
+    entries.forEach(e => {
+        const from = e.timeFrom || "";
+        const to   = e.timeTo   || "";
+        let highlighted = (e.displayName === '八重樫' && from === '9:30')
+          ? `<span class="highlight-time">${from}</span>${to ? '～'+to : ''}`
+          : (to ? `${from}～${to}` : from);
+        
+        const name = e.displayName || e.name;
+        const tongue = e.tongueMark ? ` <span title="舌下">${e.tongueMark}</span>` : "";
+        
+        parts.push(
+          `<div class="modal-label">勤務時間</div><div class="modal-value">${highlighted}</div>`,
+          `<div class="modal-label">医師名</div><div class="modal-value">${name}${tongue}</div>`
+        );
+    });
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'cell-modal-content';
+    contentDiv.id = 'cellModalContent';
+    contentDiv.innerHTML = parts.join('');
     
-    let highlighted = "";
-    if (e.displayName === '八重樫' && from === '9:30') {
-      highlighted = '<span class="highlight-time">' + from + '</span>' + (to ? '～'+to : '');
-    } else {
-      highlighted = to ? (from + '～' + to) : from;
-    }
+    modal.appendChild(contentDiv);
+    document.body.appendChild(modal);
     
-    const nameTxt = e.displayName || e.name || '';
-    const tongueIcon = e.tongueMark ? ' <span title="舌下">' + e.tongueMark + '</span>' : '';
+    modal.style.display = 'flex';
+    document.body.classList.add('no-scroll');
     
-    htmlParts.push(
-      '<div class="modal-label">勤務時間</div><div class="modal-value">' + highlighted + '</div>',
-      '<div class="modal-label">医師名</div><div class="modal-value">' + nameTxt + tongueIcon + '</div>'
-    );
-  });
-  
-  content.innerHTML = htmlParts.join('');
-  modal.style.display = 'flex';
-  document.body.classList.add('no-scroll');
-  
-  const closeFunc = function() {
-    modal.style.display = 'none';
-    document.body.classList.remove('no-scroll');
-  };
-  
-  document.getElementById('cellModalClose').onclick = closeFunc;
-  modal.onclick = function(e) {
-    if(e.target === modal) closeFunc();
-  };
+    const close = () => {
+      modal.style.display = 'none';
+      document.body.classList.remove('no-scroll');
+    };
+    
+    document.getElementById('cellModalClose').onclick = close;
+    modal.onclick = (e) => { if (e.target === modal) close(); };
+  }
 }
 
-// ===== データ取得 (デバッグログ付き) =====
+// ===== データ取得 =====
 async function fetchSchedule(){
-  console.log("🚀 fetchSchedule開始"); // ★デバッグログ
-  if (isLoading) {
-    console.log("読み込み中のためスキップ");
-    return;
-  }
+  if (isLoading) return;
 
   const url = new URL(GAS_API);
   url.searchParams.set('action', 'schedule');
   url.searchParams.set('clinic', clinicCode);
-  url.searchParams.set('month', state.monthStr); 
+  url.searchParams.set('month', state.monthStr);
 
-  console.log("APIリクエスト: " + url.toString()); // ★デバッグログ
   showLoader();
-  
   try {
     const res = await fetch(url.toString());
-    console.log("レスポンス受信: " + res.status); // ★デバッグログ
-    
     const json = await res.json();
-    console.log("JSONパース成功");
-    
     if (!json.ok) throw new Error(json.error || 'API error');
     
     clinicName   = json.clinicName || '';
@@ -426,7 +375,7 @@ async function fetchSchedule(){
     minYearMonth = data.minYearMonth || "";
     maxYearMonth = data.maxYearMonth || "";
     
-    rooms.sort(function(a,b){
+    rooms.sort((a,b)=>{
       const ia = DEPT_ORDER.indexOf(a);
       const ib = DEPT_ORDER.indexOf(b);
       if (ia===-1 && ib===-1) return a.localeCompare(b,'ja');
@@ -434,58 +383,53 @@ async function fetchSchedule(){
       return ia - ib;
     });
 
-    console.log("カレンダー描画へ");
     renderCalendar();
   } catch(e) {
-    console.error("❌ エラー発生:", e);
-    // エラーでもアラートを出さず、コンソールのみにする
+    console.error(e);
   } finally {
     hideLoader();
   }
 }
 
 // ===== 初期化 =====
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("DOM読み込み完了"); // ★デバッグログ
+document.addEventListener('DOMContentLoaded', () => {
   const p = new URLSearchParams(location.search);
-  clinicCode = p.get('clinic') || '001';
+  const c = (p.get('clinic') || '').trim();
+  clinicCode = /^\d{3}$/.test(c) ? c : '001';
   
+  // 1行モード判定
   const olVal = (p.get('oneLine') || '').toLowerCase();
   oneLine = ['1','true','on','yes'].includes(olVal);
+  
+  const u = new URL(location.href);
+  u.searchParams.set('clinic', clinicCode);
+  history.replaceState(null, '', u);
 
   state.monthStr = yyyymm(new Date());
 
   const prevBtn = document.getElementById('prevMonth');
-  if (prevBtn) {
-    prevBtn.onclick = function(){
-      const parts = state.monthStr.split('-');
-      const d = new Date(Number(parts[0]), Number(parts[1])-1 - 1, 1);
-      state.monthStr = yyyymm(d);
-      fetchSchedule();
-    };
-  }
+  if(prevBtn) prevBtn.onclick = ()=>{
+    const [y,m] = state.monthStr.split('-').map(Number);
+    state.monthStr = yyyymm(new Date(y, m-2, 1));
+    fetchSchedule();
+  };
   
   const nextBtn = document.getElementById('nextMonth');
-  if (nextBtn) {
-    nextBtn.onclick = function(){
-      const parts = state.monthStr.split('-');
-      const d = new Date(Number(parts[0]), Number(parts[1])-1 + 1, 1);
-      state.monthStr = yyyymm(d);
-      fetchSchedule();
-    };
-  }
-  
-  const calendarEl = document.getElementById('calendar');
-  if (calendarEl) {
-    calendarEl.addEventListener('click', function(e) {
-      const td = e.target.closest('td[data-entry]');
-      if (!td) return;
-      try {
-        const payload = JSON.parse(td.dataset.entry);
-        showCellModal(payload);
-      } catch (_) { }
-    });
-  }
+  if(nextBtn) nextBtn.onclick = ()=>{
+    const [y,m] = state.monthStr.split('-').map(Number);
+    state.monthStr = yyyymm(new Date(y, m, 1));
+    fetchSchedule();
+  };
+
+  const cal = document.getElementById('calendar');
+  if(cal) cal.addEventListener('click', (e) => {
+    const td = e.target.closest('td[data-entry]');
+    if (!td) return;
+    try {
+      const payload = JSON.parse(td.dataset.entry);
+      showCellModal(payload);
+    } catch (_) { }
+  });
 
   fetchSchedule();
 });
